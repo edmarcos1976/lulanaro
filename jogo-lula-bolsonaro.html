@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Jogo Cômico Lula x Bolsonaro</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+<script>
+let player;
+let gravity = 1;
+let ground = 350;
+let obstacles = [];
+let collectibles = [];
+let character = 'lula'; // pode mudar para 'bolsonaro'
+let imgLula, imgBozo;
+let score = 0;
+let gameOver = false;
+
+function preload() {
+  imgLula = loadImage('https://i.imgur.com/Yt4U4eb.png');
+  imgBozo = loadImage('https://i.imgur.com/4FwAnvY.png');
+}
+
+function setup() {
+  createCanvas(800, 400);
+  player = new Player();
+
+  for (let i = 500; i < 5000; i += random(400, 700)) {
+    obstacles.push(new Obstacle(i));
+    collectibles.push(new Collectible(i + 100));
+  }
+}
+
+function draw() {
+  background(200, 255, 255);
+
+  if (gameOver) {
+    textSize(32);
+    fill(0);
+    textAlign(CENTER);
+    text('Fim de jogo! Pontuação: ' + score, player.pos.x + 300, height / 2);
+    return;
+  }
+
+  translate(-player.pos.x + 100, 0);
+
+  player.update();
+  player.show();
+
+  fill(100, 200, 100);
+  rect(player.pos.x - 100, ground, width * 10, height - ground);
+
+  for (let obs of obstacles) {
+    obs.show();
+    if (player.hits(obs)) {
+      gameOver = true;
+    }
+  }
+
+  for (let item of collectibles) {
+    item.show();
+    if (!item.collected && player.collects(item)) {
+      score += 10;
+      item.collected = true;
+    }
+  }
+
+  fill(0);
+  textSize(20);
+  text('Score: ' + score, player.pos.x - 80, 30);
+}
+
+function keyPressed() {
+  if (key === ' ') {
+    player.jump();
+  }
+}
+
+class Player {
+  constructor() {
+    this.pos = createVector(100, ground - 60);
+    this.vel = createVector(0, 0);
+    this.size = 50;
+  }
+
+  update() {
+    this.vel.y += gravity;
+    this.pos.add(this.vel);
+    if (this.pos.y > ground - this.size) {
+      this.pos.y = ground - this.size;
+      this.vel.y = 0;
+    }
+    this.pos.x += 3;
+  }
+
+  jump() {
+    if (this.pos.y === ground - this.size) {
+      this.vel.y = -15;
+    }
+  }
+
+  show() {
+    if (character === 'lula') {
+      image(imgLula, this.pos.x, this.pos.y, this.size, this.size);
+    } else {
+      image(imgBozo, this.pos.x, this.pos.y, this.size, this.size);
+    }
+  }
+
+  hits(obstacle) {
+    return collideRectRect(this.pos.x, this.pos.y, this.size, this.size,
+                           obstacle.x, obstacle.y, obstacle.w, obstacle.h);
+  }
+
+  collects(item) {
+    return collideRectRect(this.pos.x, this.pos.y, this.size, this.size,
+                           item.x, item.y, item.size, item.size);
+  }
+}
+
+class Obstacle {
+  constructor(x) {
+    this.x = x;
+    this.y = ground - 40;
+    this.w = 30;
+    this.h = 40;
+  }
+
+  show() {
+    fill(255, 0, 0);
+    rect(this.x, this.y, this.w, this.h);
+    fill(0);
+    textSize(10);
+    text("Fake News", this.x, this.y - 5);
+  }
+}
+
+class Collectible {
+  constructor(x) {
+    this.x = x;
+    this.y = ground - 60;
+    this.size = 25;
+    this.collected = false;
+  }
+
+  show() {
+    if (!this.collected) {
+      fill(255, 215, 0);
+      ellipse(this.x, this.y, this.size);
+      fill(0);
+      textSize(10);
+      text(character === 'lula' ? "Picanha" : "Pix", this.x - 15, this.y - 20);
+    }
+  }
+}
+
+function collideRectRect(x, y, w, h, x2, y2, w2, h2) {
+  return (x + w >= x2 &&
+          x <= x2 + w2 &&
+          y + h >= y2 &&
+          y <= y2 + h2);
+}
+</script>
+</body>
+</html>
